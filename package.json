@@ -1,0 +1,47 @@
+{
+  "name": "bare-native-react",
+  "version": "0.0.0",
+  "description": "React renderer for bare-native",
+  "exports": {
+    "./package": "./package.json",
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./refresh": {
+      "types": "./lib/refresh.d.ts",
+      "default": "./lib/refresh.js"
+    }
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "lib"
+  ],
+  "scripts": {
+    "format": "prettier --write . && lunte --fix",
+    "lint": "prettier --check . && lunte",
+    "test": "brittle-bare --coverage test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/holepunchto/bare-native-react.git"
+  },
+  "author": "Holepunch",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "bare-native": "^0.3.0",
+    "bare-refresh": "^0.1.0",
+    "react-reconciler": "^0.34.0",
+    "react-refresh": "^0.19.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "brittle": "^4.2.0",
+    "lunte": "^1.8.0",
+    "prettier": "^3.4.2",
+    "prettier-config-holepunch": "^2.0.0"
+  }
+}
