@@ -30,7 +30,7 @@
   "author": "Holepunch",
   "license": "Apache-2.0",
   "dependencies": {
-    "bare-native": "^0.3.0",
+    "bare-native": "^0.3.2",
     "bare-refresh": "^0.1.0",
     "react-reconciler": "^0.34.0",
     "react-refresh": "^0.19.0"

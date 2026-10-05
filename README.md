@@ -69,7 +69,7 @@ A spinner. `animating` defaults to `true` and `size` is `small` or `large`. `col
 
 #### `<web-view>`
 
-Shows a web page. It cannot contain children and takes no props of its own: `loadURL(url)` and `loadHTML(html)` on a ref load a page, and `inspectable(enabled)` opens it to the development tools of macOS, iOS and Android.
+Shows a web page and cannot contain children. `url` loads the page at a URL and `html` loads one from markup; whichever of the two last changed is what it shows. `inspectable` opens the page to the development tools of the platform, and on Android it applies to every web view in the application.
 
 Each takes a `style` prop, described in <https://github.com/holepunchto/bare-native>, and `onLayout`, which reports the frame of the element whenever a layout pass moves or resizes it. Any other prop is an error rather than a warning, because a misspelled prop is otherwise invisible.
 
