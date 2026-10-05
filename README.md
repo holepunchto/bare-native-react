@@ -37,9 +37,21 @@ window.show()
 
 #### `<view>`
 
+Holds other elements, and is the one element that reports the pointer: `onPointerDown`, `onPointerMove`, `onPointerUp` and `onPointerCancel`, each with `{ x, y, button, pointerId, pointerType }` relative to the view.
+
 #### `<text>`
 
 Takes its content as a single string or number child. Text is measured by the platform's own text engine and that measurement is what drives the layout, so a text node sizes to its content and rewraps when the space it is given changes.
+
+#### `<image>`
+
+Draws the image file at the path in `source`. It reports `onLoad` with the natural size of the image once it has been decoded, and `onError` if it cannot be. `resizeMode` in its style picks how the image fills its box, one of `cover`, `contain`, `stretch` or `center`, and `tintColor` recolors it on macOS, iOS and Android.
+
+#### `<text-input>`
+
+An editable field. Takes `value`, `placeholder`, `editable` and `selection`, and the keyboard hints `keyboardType`, `returnKeyType`, `autoCapitalize` and `autoCorrect`, which a platform ignores where it has no use for them. It reports `onChange` with the text, `onSelectionChange` with `{ start, end }`, `onKeyPress` with `{ text, start, end }`, `onSubmit` with the text when Return is pressed in a single line field, and `onFocus` and `onBlur`. `focus()` and `blur()` on a ref move the focus.
+
+A field reports what the person typing does and never what is written to it, so a controlled input that writes `value` back on every `onChange` does not loop. `multiline` and `secureTextEntry` are settled when the field is made, so changing either is an error; key the element instead. A field cannot be both, and a secure field on Windows reports only `onChange`, `onFocus` and `onBlur`.
 
 #### `<scroll-view>`
 
@@ -47,11 +59,21 @@ Lays its children out at their natural size along its axis and keeps a viewport 
 
 It reports `onScroll` with the offset it scrolled to, and `contentOffset` on a ref reads and writes it.
 
+#### `<switch>`
+
+An on and off toggle at the size of the platform's own. `value` is whether it is on and `enabled` whether it can be toggled. It reports `onChange` with the new value when the person toggles it, and never when `value` is written.
+
+#### `<activity-indicator>`
+
+A spinner. `animating` defaults to `true` and `size` is `small` or `large`. `color` in its style tints it everywhere but macOS.
+
 #### `<web-view>`
 
-Each takes a `style` prop, described in <https://github.com/holepunchto/bare-native>, and `onLayout`, `onPointerDown`, `onPointerMove`, `onPointerUp` and `onPointerCancel`. Any other prop is an error rather than a warning, because a misspelled prop is otherwise invisible.
+Shows a web page. It cannot contain children and takes no props of its own: `loadURL(url)` and `loadHTML(html)` on a ref load a page, and `inspectable(enabled)` opens it to the development tools of macOS, iOS and Android.
 
-Each is also exported as a component of the same name, `View`, `Text`, `ScrollView` and `WebView`, which is the form the components below are written in and the one React Native reads like:
+Each takes a `style` prop, described in <https://github.com/holepunchto/bare-native>, and `onLayout`, which reports the frame of the element whenever a layout pass moves or resizes it. Any other prop is an error rather than a warning, because a misspelled prop is otherwise invisible.
+
+Each is also exported as a component of the same name, `View`, `Text`, `Image`, `TextInput`, `ScrollView`, `Switch`, `ActivityIndicator` and `WebView`, which is the form the components below are written in and the one React Native reads like:
 
 ```jsx
 <View style={{ padding: 16 }}>
