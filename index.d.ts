@@ -77,7 +77,14 @@ interface ScrollViewProps extends ElementProps<native.ScrollView, native.StyleSh
   children?: ReactNode
 }
 
-interface WebViewProps extends ElementProps<native.WebView, native.StyleSheet.ViewStyle> {}
+interface WebViewProps extends ElementProps<native.WebView, native.StyleSheet.ViewStyle> {
+  /** The URL of the page to load. */
+  url?: string | null
+  /** The HTML of the page to load. Of `url` and `html`, the one that last changed is shown. */
+  html?: string | null
+  /** Open the page to the development tools of the platform. Defaults to `false`. */
+  inspectable?: boolean
+}
 
 interface SwitchProps extends ElementProps<native.Switch, native.StyleSheet.ControlStyle> {
   value?: boolean
