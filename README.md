@@ -1,6 +1,6 @@
 # bare-native-react
 
-React renderer for <https://github.com/holepunchto/bare-native>. A component tree renders as real native views, laid out by Yoga and positioned by `bare-native`, with no bridge and no serialization.
+React renderer for <https://github.com/holepunchto/bare-native>. Components render as native views, laid out by Yoga and positioned by `bare-native`, with no bridge and no serialization.
 
 ```
 npm i bare-native-react
@@ -37,43 +37,47 @@ window.show()
 
 #### `<view>`
 
-Holds other elements, and is the one element that reports the pointer: `onPointerDown`, `onPointerMove`, `onPointerUp` and `onPointerCancel`, each with `{ x, y, button, pointerId, pointerType }` relative to the view.
+A container for other elements. It is the only element that reports pointer events: `onPointerDown`, `onPointerMove`, `onPointerUp` and `onPointerCancel`, each with `{ x, y, button, pointerId, pointerType }` relative to the view.
 
 #### `<text>`
 
-Takes its content as a single string or number child. Text is measured by the platform's own text engine and that measurement is what drives the layout, so a text node sizes to its content and rewraps when the space it is given changes.
+Takes a single string or number child. Text is measured by the platform text engine, so a text element sizes to its content and rewraps when its available space changes.
 
 #### `<image>`
 
-Draws the image file at the path in `source`. It reports `onLoad` with the natural size of the image once it has been decoded, and `onError` if it cannot be. `resizeMode` in its style picks how the image fills its box, one of `cover`, `contain`, `stretch` or `center`, and `tintColor` recolors it on macOS, iOS and Android.
+Draws the image file at the path in `source`. Reports `onLoad` with the natural size of the image once decoded, and `onError` if decoding fails. The `resizeMode` style sets how the image fills its box, one of `cover`, `contain`, `stretch` or `center`. The `tintColor` style recolors the image on macOS, iOS and Android.
 
 #### `<text-input>`
 
-An editable field. Takes `value`, `placeholder`, `editable` and `selection`, and the keyboard hints `keyboardType`, `returnKeyType`, `autoCapitalize` and `autoCorrect`, which a platform ignores where it has no use for them. It reports `onChange` with the text, `onSelectionChange` with `{ start, end }`, `onKeyPress` with `{ text, start, end }`, `onSubmit` with the text when Return is pressed in a single line field, and `onFocus` and `onBlur`. `focus()` and `blur()` on a ref move the focus.
+An editable text field. Takes `value`, `placeholder`, `editable` and `selection`, as well as the keyboard hints `keyboardType`, `returnKeyType`, `autoCapitalize` and `autoCorrect`, which are ignored on platforms that don't support them.
 
-A field reports what the person typing does and never what is written to it, so a controlled input that writes `value` back on every `onChange` does not loop. `multiline` and `secureTextEntry` are settled when the field is made, so changing either is an error; key the element instead. A field cannot be both, and a secure field on Windows reports only `onChange`, `onFocus` and `onBlur`.
+Reports `onChange` with the text, `onSelectionChange` with `{ start, end }`, `onKeyPress` with `{ text, start, end }`, `onSubmit` with the text when Return is pressed in a single line field, and `onFocus` and `onBlur`. Call `focus()` and `blur()` on a ref to move focus.
+
+Events are only reported for user input, not for changes to `value`, so a controlled input that sets `value` on every `onChange` won't loop.
+
+`multiline` and `secureTextEntry` can't be changed after the field is created, so change the element `key` instead. A field can't be both, and on Windows a secure field only reports `onChange`, `onFocus` and `onBlur`.
 
 #### `<scroll-view>`
 
-Lays its children out at their natural size along its axis and keeps a viewport over them. What scrolls is a box of its own, so `contentStyle` styles that box rather than the viewport, and `horizontal` picks the axis. The axis is settled when the view is made, because Android has a class per axis, so changing it is an error; key the element instead.
+Lays out its children at their natural size along the scroll axis and shows a scrollable viewport over them. `horizontal` sets the axis and `contentStyle` styles the scrolled content rather than the viewport. The axis can't be changed after the view is created, as Android uses a separate class per axis, so change the element `key` instead.
 
-It reports `onScroll` with the offset it scrolled to, and `contentOffset` on a ref reads and writes it.
+Reports `onScroll` with the new offset. Read and write `contentOffset` on a ref to get and set it.
 
 #### `<switch>`
 
-An on and off toggle at the size of the platform's own. `value` is whether it is on and `enabled` whether it can be toggled. It reports `onChange` with the new value when the person toggles it, and never when `value` is written.
+An on/off toggle at the platform's native size. `value` sets whether it is on and `enabled` whether it can be toggled. Reports `onChange` with the new value when the user toggles it, but not when `value` changes.
 
 #### `<activity-indicator>`
 
-A spinner. `animating` defaults to `true` and `size` is `small` or `large`. `color` in its style tints it everywhere but macOS.
+A spinner. `animating` defaults to `true` and `size` is `small` or `large`. The `color` style tints it on all platforms except macOS.
 
 #### `<web-view>`
 
-Shows a web page and cannot contain children. `url` loads the page at a URL and `html` loads one from markup; whichever of the two last changed is what it shows. `inspectable` opens the page to the development tools of the platform, and on Android it applies to every web view in the application.
+Shows a web page and can't have children. `url` loads a page from a URL and `html` loads one from markup. If both are set, the one changed most recently wins. `inspectable` enables the platform developer tools for the page. On Android, it applies to every web view in the application.
 
-Each takes a `style` prop, described in <https://github.com/holepunchto/bare-native>, and `onLayout`, which reports the frame of the element whenever a layout pass moves or resizes it. Any other prop is an error rather than a warning, because a misspelled prop is otherwise invisible.
+All elements take a `style` prop, described in <https://github.com/holepunchto/bare-native>, and `onLayout`, which reports the frame of the element whenever layout moves or resizes it. Unknown props throw an error rather than log a warning, so typos don't go unnoticed.
 
-Each is also exported as a component of the same name, `View`, `Text`, `Image`, `TextInput`, `ScrollView`, `Switch`, `ActivityIndicator` and `WebView`, which is the form the components below are written in and the one React Native reads like:
+Each element is also exported as a component: `View`, `Text`, `Image`, `TextInput`, `ScrollView`, `Switch`, `ActivityIndicator` and `WebView`. These read like React Native and are used in the examples below:
 
 ```jsx
 <View style={{ padding: 16 }}>
@@ -81,15 +85,15 @@ Each is also exported as a component of the same name, `View`, `Text`, `Image`, 
 </View>
 ```
 
-A component is its element and nothing more. Its props go through untouched, the ref among them, so everything said about an element holds for both forms.
+The components pass all props, including `ref`, straight through to the element, so the two forms behave the same.
 
 ## Components
 
-These are JavaScript over the elements above and are exported from this module.
+These are built in JavaScript on top of the elements above.
 
 #### `Pressable`
 
-A press is a pointer going down and coming back up inside the same box, which is the same wherever the pointer came from. Takes `onPress`, `onPressIn`, `onPressOut`, `style` and `children`.
+Calls `onPress` when a pointer goes down and back up inside it. Takes `onPress`, `onPressIn`, `onPressOut`, `style` and `children`.
 
 #### `FlatList`
 
@@ -104,29 +108,37 @@ h(FlatList, {
 })
 ```
 
-Renders the items around the viewport and holds the space the rest would take with a box at either end, so what a list builds follows the size of the window rather than the length of the data.
+Only renders the items near the viewport and uses spacers for the rest, so the amount of work depends on the window size rather than the length of the data.
 
-Beyond `data`, `renderItem` and `keyExtractor`, which defaults to an item's `key`, then its `id`, then its index: `horizontal`, `numColumns` and `columnWrapperStyle`, `initialNumToRender`, `windowSize` in viewports of items held ready, `onEndReached` and `onEndReachedThreshold`, `ListHeaderComponent`, `ListFooterComponent`, `ListEmptyComponent`, `ItemSeparatorComponent`, `onScroll` and `onLayout`, and `style` and `contentStyle` for the scroll view underneath.
+Takes `data`, `renderItem` and `keyExtractor`, which defaults to the item `key`, then `id`, then index. Also takes:
 
-`getItemLayout` answers where an item is without rendering it. Given one, the list stops listening for its items' frames altogether, and nothing shifts as they arrive.
+- `horizontal`, `numColumns` and `columnWrapperStyle`
+- `initialNumToRender`
+- `windowSize`, measured in viewports
+- `onEndReached` and `onEndReachedThreshold`
+- `ListHeaderComponent`, `ListFooterComponent`, `ListEmptyComponent` and `ItemSeparatorComponent`
+- `onScroll` and `onLayout`
+- `style` and `contentStyle`, passed to the underlying scroll view
 
-Spacing between items is `ItemSeparatorComponent` and not a `gap`. A gap would put space between items that the list's offsets know nothing about.
+`getItemLayout` lets the list compute item positions without rendering them. When set, the list no longer measures items, so nothing shifts as they render.
 
-A ref gives `scrollToOffset`, `scrollToIndex` and `scrollToEnd`, and `view`, which is the scroll view itself.
+Use `ItemSeparatorComponent` for spacing between items, not `gap`. The list doesn't account for `gap` when computing offsets.
+
+A ref provides `scrollToOffset()`, `scrollToIndex()`, `scrollToEnd()` and `view`, the underlying scroll view.
 
 #### `SectionList`
 
-Takes `sections`, each with `data`, an optional `key`, and an optional `renderItem` and `keyExtractor` of its own, plus `renderSectionHeader`, `renderSectionFooter` and `SectionSeparatorComponent`. The rest is `FlatList`'s.
+Takes `sections`, each with `data` and an optional `key`, `renderItem` and `keyExtractor`. Also takes `renderSectionHeader`, `renderSectionFooter` and `SectionSeparatorComponent`, plus all `FlatList` props.
 
-Sections are flattened into one run, so a single window covers the whole list rather than one per section. Headers do not stick.
+Sections are rendered as one flat list with a single window. Headers aren't sticky.
 
 #### `VirtualizedList`
 
-What the two above are built on, for data that is not an array. Takes `getItem` and `getItemCount` in place of reading one.
+The base for the two lists above, for data that isn't an array. Takes `getItem` and `getItemCount` instead of `data`.
 
 ## JSX
 
-Bare does not transform JSX, so an application compiles it itself. React's recommendation is the automatic runtime, which is the default in `@babel/preset-react` and does not need `React` in scope:
+Bare doesn't transform JSX, so applications must compile it themselves. React recommends the automatic runtime, which is the default in `@babel/preset-react` and doesn't require `React` in scope:
 
 ```json
 {
@@ -135,9 +147,9 @@ Bare does not transform JSX, so an application compiles it itself. React's recom
 }
 ```
 
-`sourceType` matters. The transform emits a reference to `react/jsx-runtime`, and as an ES module import that is hoisted above everything else in the file, including the line that installs `process` below. Compiling as a script emits a `require` instead, which runs in order.
+`sourceType` must be `script`. The automatic runtime imports `react/jsx-runtime`, and ES module imports are hoisted above the rest of the file, including the line that sets up `process` below. Compiling as a script emits a `require` instead, which runs in order.
 
-For the same reason an application keeps its entry separate from its components:
+For the same reason, keep the entry point separate from the components:
 
 `app.js`
 
@@ -162,9 +174,9 @@ window.show()
 
 ## Notes
 
-React selects its build by reading `process.env.NODE_ENV` when it loads, and Bare has no process global. An application therefore needs one in place before it requires React, which is what the entry above is for. Requiring this module without one is an error.
+React reads `process.env.NODE_ENV` when loaded to select its build, but Bare has no `process` global. Applications must define one before requiring React, as in the entry point above. Requiring this module without it throws an error.
 
-Leaving `NODE_ENV` unset selects React's development build and its warnings. Set it to `production` for release.
+If `NODE_ENV` is unset, React uses its development build with warnings enabled. Set it to `production` for release builds.
 
 ## License
 
