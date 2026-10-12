@@ -1,9 +1,8 @@
 const { test } = require('bare-tap')
-const { afterAnimationFrame } = require('bare-animation-frame')
 const { createElement: h, createRef, useEffect, useRef } = require('react')
 const native = require('bare-native')
 const render = require('..')
-const { mount, near, update } = require('./helpers')
+const { afterAnimationFrame, mount, near, update } = require('./helpers')
 
 const { Pressable, View, createPortal, useWindow } = render
 
@@ -14,7 +13,7 @@ test('a tree is rendered into the window and taken down when it is unmounted', a
 
   const node = ref.current
 
-  near(t, node.measureInWindow(), { x: 0, y: 0, width: 400, height: 300 }, 'filling it')
+  near(t, node.measureInWindow(), { x: 0, y: 0, ...window.size }, 'filling it')
 
   render.unmount(window)
 
@@ -122,12 +121,12 @@ test(
 
     other.show()
 
-    await afterAnimationFrame()
+    await afterAnimationFrame(other)
 
     near(t, ref.current.measureInWindow(), { x: 10, y: 20, width: 30, height: 40 }, 'with no tree')
 
     await update(h(App, { left: 50 }))
-    await afterAnimationFrame()
+    await afterAnimationFrame(other)
 
     near(t, ref.current.measureInWindow(), { x: 50, y: 20, width: 30, height: 40 }, 'as it changes')
 

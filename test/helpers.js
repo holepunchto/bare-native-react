@@ -1,10 +1,14 @@
-const { afterAnimationFrame } = require('bare-animation-frame')
+const AnimationFrameProvider = require('bare-animation-frame')
 const { Dimensions, Window } = require('bare-native')
 const render = require('..')
 
 // A window cannot be closed, and iOS and Android only have one, so the tests
 // share a window and render into it in turn.
 let window = null
+
+// GTK otherwise times frames by its active window, which a window that has not
+// been shown yet can become.
+const providers = new WeakMap()
 
 // GTK and XAML only place new content on their next frame.
 exports.mount = async function mount(t, element) {
@@ -18,9 +22,20 @@ exports.mount = async function mount(t, element) {
 
   if (first) window.show()
 
-  await afterAnimationFrame()
+  await exports.afterAnimationFrame()
 
   return window
+}
+
+exports.afterAnimationFrame = function afterAnimationFrame(target = window) {
+  let provider = providers.get(target)
+
+  if (provider === undefined) {
+    provider = new AnimationFrameProvider(target.native)
+    providers.set(target, provider)
+  }
+
+  return provider.afterAnimationFrame()
 }
 
 // Resolves once the render has been committed.

@@ -144,8 +144,9 @@ function session(t, port) {
 }
 
 // A backend that is closed resets the connection, which is not a failure here.
+// The backend connects to 127.0.0.1, which `localhost` may not resolve to.
 function serve(t, port, onconnection) {
-  const server = new ws.Server({ port }, (socket) => {
+  const server = new ws.Server({ port, host: '127.0.0.1' }, (socket) => {
     socket.on('error', noop)
 
     onconnection(socket)
