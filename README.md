@@ -33,6 +33,55 @@ render(h(App), window)
 window.show()
 ```
 
+Rendering into the same window again updates the tree in place. `render.unmount(window)` unmounts the tree, running the cleanup of every effect, and removes it from the window.
+
+In a <https://github.com/holepunchto/bare-refresh> development build, the trees of a graph are unmounted when the graph is replaced by a reload. A module that accepts its own changes is evaluated again instead, so pass it as `module` to unmount its tree whenever it is disposed. Otherwise the old tree stays mounted and its effects keep running:
+
+```js
+render(h(App), window, { module })
+```
+
+`callback` in the same options is called once the render has been committed.
+
+### Portals and anchoring
+
+`render.useWindow()` returns the window the calling component was rendered into. `render.createPortal(children, target)` renders `children` into another node or window, while they stay part of the tree they came from for context and error boundaries. Children of a window are laid out in its content after any tree rendered into it, so position them absolutely. The window need not have a tree of its own. Children of a text node must be text, as in a nested `<text>`.
+
+Every element takes `anchor`, which places it beside another node or a rectangle, as for a tooltip or a popover. `to` can be a ref, a node, a rectangle or a function returning one of them. The element flips to the other side when it does not fit, stays inside the border of its parent, and is hidden while its target is scrolled or clipped out of view. `match: 'width'` makes it as wide as its target, as for a menu below a button. An anchored element inside another follows it, which is how an arrow is drawn:
+
+```js
+function Tooltip({ to, children }) {
+  const window = render.useWindow()
+
+  return render.createPortal(
+    h(
+      View,
+      {
+        anchor: { to, side: 'top', offset: 8 },
+        style: { position: 'absolute', padding: 6, borderRadius: 4, backgroundColor: '#333' }
+      },
+      h(View, {
+        anchor: { to, side: 'top', offset: 4 },
+        style: {
+          position: 'absolute',
+          width: 8,
+          height: 8,
+          backgroundColor: '#333',
+          transform: [{ rotate: '45deg' }]
+        }
+      }),
+      h(Text, { style: { color: '#fff' } }, children)
+    ),
+    window
+  )
+}
+
+const button = useRef(null)
+
+h(Pressable, { ref: button, onPress }, h(Text, null, 'Save'))
+h(Tooltip, { to: button }, 'Saves the document')
+```
+
 ## Elements
 
 #### `<view>`
@@ -93,7 +142,7 @@ These are built in JavaScript on top of the elements above.
 
 #### `Pressable`
 
-Calls `onPress` when a pointer goes down and back up inside it. Takes `onPress`, `onPressIn`, `onPressOut`, `style` and `children`.
+Calls `onPress` when a pointer goes down and back up inside it. Takes `onPress`, `onPressIn`, `onPressOut`, `style`, `anchor`, `ref` and `children`.
 
 #### `FlatList`
 
@@ -135,6 +184,23 @@ Sections are rendered as one flat list with a single window. Headers aren't stic
 #### `VirtualizedList`
 
 The base for the two lists above, for data that isn't an array. Takes `getItem` and `getItemCount` instead of `data`.
+
+## React DevTools
+
+A development build can connect to the standalone React DevTools app, which shows the component tree and lets you inspect and edit props, state and hooks. Hovering a component in DevTools highlights it in the application, and the element picker selects the component under the next press. Attach `bare-native-react/devtools` to the host of a <https://github.com/holepunchto/bare-refresh> development build:
+
+```js
+loop({
+  // ...
+  attach: ['bare-native-react/devtools']
+})
+```
+
+Then start the app with `npx react-devtools`. The host connects to it on `127.0.0.1:8097`, and connects again whenever the app is closed and reopened, so it can be started before or after the application. It also connects again after every reload, so DevTools starts over with the new graph.
+
+On Android, the port must be forwarded from the device with `adb reverse tcp:8097 tcp:8097`.
+
+The DevTools backend expects a browser, so the module defines `self` and `window` as the global object, as React Native does.
 
 ## JSX
 

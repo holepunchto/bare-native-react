@@ -1,14 +1,28 @@
 const bare = require('bare-native')
-const { createElement } = require('react')
+const { createContext, createElement, useContext } = require('react')
 const refresh = require('bare-refresh/hot')
 
 const failures = require('./lib/failures')
 const { constants } = require('./lib/react')
 const elements = require('./lib/elements')
 const ErrorBoundary = require('./lib/error-boundary')
+const inspector = require('./lib/inspector')
 const reconciler = require('./lib/host')
+const windows = require('./lib/windows')
 
-const roots = new WeakMap()
+const roots = new Map()
+
+const WindowContext = createContext(null)
+
+const detachInspector = inspector()
+
+// A graph that is replaced leaves its trees behind unless they are unmounted,
+// and their effects keep running.
+refresh.dispose(() => {
+  detachInspector()
+
+  for (const window of roots.keys()) exports.unmount(window)
+})
 
 // These must never throw. Throwing re-enters React's error handling, which
 // retries the render and throws again, spinning without reporting anything.
@@ -36,17 +50,21 @@ function report(what, error, info) {
   refresh.report(error)
 }
 
-module.exports = exports = function render(element, window, callback = null) {
-  let mounted = roots.get(window)
+module.exports = exports = function render(element, window, opts = {}) {
+  const { module = null, callback = null } = opts
 
-  if (mounted === undefined) {
+  let root = roots.get(window)
+
+  if (root === undefined) {
+    // The tree sits in a view of its own, below whatever portals have put in
+    // the window.
     const view = new bare.View()
     view.style = { flexGrow: 1 }
 
-    window.content(view)
+    windows.content(window).insertChild(view, 0)
 
-    const root = reconciler.createContainer(
-      { view, window },
+    root = reconciler.createContainer(
+      view,
       constants.ConcurrentRoot,
       null,
       false,
@@ -58,21 +76,27 @@ module.exports = exports = function render(element, window, callback = null) {
       null
     )
 
-    mounted = { root, view }
+    roots.set(window, root)
 
-    roots.set(window, mounted)
+    // A module that accepts its own changes is evaluated again rather than
+    // disposed with the graph, and would otherwise leave its tree behind.
+    if (module !== null) refresh.hot(module).dispose(() => exports.unmount(window))
   }
 
   // An unmounted root is one the refresh runtime tries to mount again, which
   // hangs the application, so the root is never allowed to unmount on error.
   reconciler.updateContainer(
-    createElement(ErrorBoundary, { onError: failures.lost }, element),
-    mounted.root,
+    createElement(
+      WindowContext.Provider,
+      { value: window },
+      createElement(ErrorBoundary, { onError: failures.lost }, element)
+    ),
+    root,
     null,
     callback
   )
 
-  return mounted.root
+  return root
 }
 
 exports.View = elements.View
@@ -98,15 +122,38 @@ exports.FlatList = require('./lib/flat-list')
 exports.SectionList = require('./lib/section-list')
 exports.VirtualizedList = require('./lib/virtualized-list')
 
+// The window the calling component was rendered into, which is also where a
+// portal above the tree goes.
+exports.useWindow = function useWindow() {
+  const window = useContext(WindowContext)
+
+  if (window === null) {
+    throw new Error('useWindow() must be called in a tree rendered with render()')
+  }
+
+  return window
+}
+
+// Renders `children` into another node, or into a window above any tree in it,
+// while they stay part of the tree they were rendered from for context and
+// errors.
+exports.createPortal = function createPortal(children, target, key = null) {
+  const view = target instanceof bare.Window ? windows.content(target) : target
+
+  return reconciler.createPortal(children, view, null, key)
+}
+
 exports.unmount = function unmount(window) {
-  const mounted = roots.get(window)
+  const root = roots.get(window)
 
-  if (mounted === undefined) return
+  if (root === undefined) return
 
-  // A concurrent root does not unmount synchronously.
-  reconciler.updateContainer(null, mounted.root, null, () => {
-    mounted.view.destroy()
-  })
+  // Synchronously, so that a graph being disposed is rid of its tree before the
+  // next one starts.
+  reconciler.updateContainerSync(null, root, null, null)
+  reconciler.flushSyncWork()
+
+  windows.destroy(window)
 
   roots.delete(window)
 }
