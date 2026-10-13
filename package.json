@@ -11,6 +11,10 @@
     "./refresh": {
       "types": "./lib/refresh.d.ts",
       "default": "./lib/refresh.js"
+    },
+    "./devtools": {
+      "types": "./lib/devtools.d.ts",
+      "default": "./lib/devtools.js"
     }
   },
   "files": [
@@ -21,7 +25,7 @@
   "scripts": {
     "format": "prettier --write . && lunte --fix",
     "lint": "prettier --check . && lunte",
-    "test": "brittle-bare --coverage test.js"
+    "test": "bare-native-test test.js"
   },
   "repository": {
     "type": "git",
@@ -30,8 +34,10 @@
   "author": "Holepunch",
   "license": "Apache-2.0",
   "dependencies": {
-    "bare-native": "^0.3.2",
+    "bare-native": "^0.3.5",
     "bare-refresh": "^0.1.0",
+    "bare-ws": "^3.2.0",
+    "react-devtools-core": "^8.0.0",
     "react-reconciler": "^0.34.0",
     "react-refresh": "^0.19.0"
   },
@@ -39,7 +45,9 @@
     "react": "^19.0.0"
   },
   "devDependencies": {
-    "brittle": "^4.2.0",
+    "bare-animation-frame": "^0.1.0",
+    "bare-native-test": "^0.1.2",
+    "bare-tap": "^1.1.0",
     "lunte": "^1.8.0",
     "prettier": "^3.4.2",
     "prettier-config-holepunch": "^2.0.0"

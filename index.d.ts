@@ -1,4 +1,13 @@
-import { Component, ComponentType, ErrorInfo, ReactElement, ReactNode, Ref } from 'react'
+import {
+  Component,
+  ComponentType,
+  ErrorInfo,
+  ReactElement,
+  ReactNode,
+  ReactPortal,
+  Ref,
+  RefObject
+} from 'react'
 import * as native from 'bare-native'
 
 type Style = native.StyleSheet.Style
@@ -10,8 +19,18 @@ type PointerEvent = native.View.PointerEvent
 type Selection = native.TextInput.Selection
 type KeyPressEvent = native.TextInput.KeyPressEvent
 
+/** As `native.Node.AnchorOptions`, except that `to` can also be a ref to the node. */
+interface AnchorProp extends Omit<native.Node.AnchorOptions, 'to'> {
+  to: native.Node.AnchorOptions['to'] | RefObject<native.Node.Any | null>
+}
+
 interface ElementProps<T, S = Style> {
   style?: StyleProp<S>
+  /**
+   * Place the node beside another node or a rectangle, as for a tooltip or a popover. Render it
+   * into a portal to place it anywhere in the window.
+   */
+  anchor?: AnchorProp | null
   /** Called with the frame of the node whenever a layout pass moves or resizes it. */
   onLayout?: (frame: Frame) => void
   ref?: Ref<T>
@@ -110,6 +129,8 @@ interface PressableProps {
   onPressOut?: (event: PointerEvent) => void
   onLayout?: (frame: Frame) => void
   style?: StyleProp<native.StyleSheet.ViewStyle>
+  anchor?: AnchorProp | null
+  ref?: Ref<native.View>
   children?: ReactNode
 }
 
@@ -209,19 +230,26 @@ interface SectionListProps<ItemT, SectionT = {}> extends ListProps {
   SectionSeparatorComponent?: ComponentType | null
 }
 
+interface RenderOptions {
+  /**
+   * The module doing the rendering. The tree is unmounted when a refresh disposes the module, so
+   * a module that accepts its own changes need not unmount it itself.
+   */
+  module?: { url: string | URL } | null
+  /** Called once the render has been committed. */
+  callback?: (() => void) | null
+}
+
 /**
  * Render `element` into `window`, filling its content. Rendering into the same window again
- * updates the tree in place. `callback` is called once the render has been committed.
+ * updates the tree in place.
  */
-declare function render(
-  element: ReactNode,
-  window: native.Window,
-  callback?: (() => void) | null
-): unknown
+declare function render(element: ReactNode, window: native.Window, opts?: RenderOptions): unknown
 
 declare namespace render {
   export {
     type ActivityIndicatorProps,
+    type AnchorProp,
     type ComponentOrElement,
     type ElementProps,
     type ErrorBoundaryProps,
@@ -235,6 +263,7 @@ declare namespace render {
     type Point,
     type PointerEvent,
     type PressableProps,
+    type RenderOptions,
     type ScrollViewProps,
     type SectionBase,
     type SectionListProps,
@@ -250,6 +279,20 @@ declare namespace render {
     type VirtualizedListProps,
     type WebViewProps
   }
+
+  /** The window the calling component was rendered into. Throws outside a tree from `render`. */
+  export function useWindow(): native.Window
+
+  /**
+   * Render `children` into `target` while they stay part of the tree they were rendered from. A
+   * window takes them in its content, above any tree rendered into it, which is where a popover
+   * goes. Positioned absolutely, they do not move the tree. A text node takes runs of text.
+   */
+  export function createPortal(
+    children: ReactNode,
+    target: native.Window | native.Node.Any,
+    key?: string | null
+  ): ReactPortal
 
   /** Unmount the tree rendered into `window` and remove it from the window. */
   export function unmount(window: native.Window): void
