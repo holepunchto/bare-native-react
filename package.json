@@ -1,6 +1,6 @@
 {
   "name": "bare-native-react",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "React renderer for bare-native",
   "exports": {
     "./package": "./package.json",
