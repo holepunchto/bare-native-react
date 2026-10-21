@@ -2,7 +2,7 @@ const { test } = require('bare-tap')
 const { createElement: h, createRef, useEffect, useRef } = require('react')
 const native = require('bare-native')
 const render = require('..')
-const { afterAnimationFrame, mount, near, update } = require('./helpers')
+const { afterAnimationFrame, mount, near, pointer, update } = require('./helpers')
 
 const { Pressable, View, createPortal, useWindow } = render
 
@@ -203,4 +203,70 @@ test('a pressable passes its ref to its view', async (t) => {
   await mount(t, h(Pressable, { ref }))
 
   t.ok(ref.current instanceof native.View)
+})
+
+test('pressing a pressable presses in, out and then presses it', async (t) => {
+  const ref = createRef()
+  const calls = []
+
+  await mount(
+    t,
+    h(Pressable, {
+      ref,
+      style: { width: 100, height: 100 },
+      onPressIn: () => calls.push('pressIn'),
+      onPressOut: () => calls.push('pressOut'),
+      onPress: () => calls.push('press')
+    })
+  )
+
+  await pointer(t).tap(ref.current)
+
+  t.deepStrictEqual(calls, ['pressIn', 'pressOut', 'press'])
+})
+
+test('a pressable released outside itself is not pressed', async (t) => {
+  const ref = createRef()
+  const calls = []
+
+  await mount(
+    t,
+    h(Pressable, {
+      ref,
+      style: { width: 100, height: 100 },
+      onPressIn: () => calls.push('pressIn'),
+      onPressOut: () => calls.push('pressOut'),
+      onPress: () => calls.push('press')
+    })
+  )
+
+  const press = pointer(t)
+
+  await press.down(ref.current, 50, 50)
+  await press.move(ref.current, 150, 50)
+  await press.up()
+
+  t.deepStrictEqual(calls, ['pressIn', 'pressOut'])
+})
+
+test('a pressable inside another takes the press', async (t) => {
+  const ref = createRef()
+  const calls = []
+
+  await mount(
+    t,
+    h(
+      Pressable,
+      { style: { width: 200, height: 200 }, onPress: () => calls.push('outer') },
+      h(Pressable, {
+        ref,
+        style: { width: 100, height: 100 },
+        onPress: () => calls.push('inner')
+      })
+    )
+  )
+
+  await pointer(t).tap(ref.current)
+
+  t.deepStrictEqual(calls, ['inner'])
 })
