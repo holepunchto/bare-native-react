@@ -106,7 +106,10 @@ test(
   async (t) => {
     const other = new native.Window(200, 150)
 
-    t.teardown(() => render.unmount(other))
+    t.teardown(() => {
+      render.unmount(other)
+      other.hide()
+    })
 
     const ref = createRef()
 
