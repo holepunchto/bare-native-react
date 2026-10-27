@@ -34,7 +34,7 @@
   "author": "Holepunch",
   "license": "Apache-2.0",
   "dependencies": {
-    "bare-native": "^0.3.5",
+    "bare-native": "^0.3.8",
     "bare-refresh": "^0.1.0",
     "bare-ws": "^3.2.0",
     "react-devtools-core": "^8.0.0",
@@ -47,6 +47,7 @@
   "devDependencies": {
     "bare-animation-frame": "^0.1.0",
     "bare-native-test": "^0.1.2",
+    "bare-pointer": "^0.1.8",
     "bare-tap": "^1.1.0",
     "lunte": "^1.8.0",
     "prettier": "^3.4.2",
